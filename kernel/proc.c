@@ -693,3 +693,20 @@ procdump(void)
     printf("\n");
   }
 }
+
+uint64
+nproc_count(void)
+{
+  struct proc *p; // Dùng để duyệt từng ô mang tiến trình
+  int count = 0;
+
+  // Duyệt qua tất cả các mảng chứa tiến trình
+  // Xem thử tiến trình nào đang ở trạng thái UNUSED thì đếm
+  // NPROC: số lượng tiến trình tối đa
+  for(p = proc; p < &proc[NPROC]; p++){ 
+    if(p->state != UNUSED){
+      count++;
+    }
+  }
+  return count;
+}

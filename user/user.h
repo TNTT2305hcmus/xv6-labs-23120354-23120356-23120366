@@ -1,4 +1,5 @@
 struct stat;
+struct sysinfo; // Khai báo cấu trúc sysinfo
 
 // system calls
 int fork(void);
@@ -22,6 +23,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int sysinfo(struct sysinfo*); // Tạo hàm mới để gọi sysinfo từ user
 
 // ulib.c
 int stat(const char*, struct stat*);

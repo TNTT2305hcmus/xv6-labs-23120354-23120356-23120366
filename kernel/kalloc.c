@@ -80,3 +80,20 @@ kalloc(void)
     memset((char*)r, 5, PGSIZE); // fill with junk
   return (void*)r;
 }
+
+// Đếm bộ nhớ trống để gán vào trường freemem trong struct sysinfo
+uint64
+freemem_count(void)
+{
+   struct run *r; // Tạo 1 linked list gồm các trang bộ nhớ vật lý trống
+   uint64 free_bytes = 0;
+   acquire(&kmem.lock); // Yêu cầu khóa linked list đang xét. Không bị thay đổi bới CPU hoặc tiến trình khác.
+
+   for(r = kmem.freelist; r ; r = r->next){
+      free_bytes += PGSIZE; // PGSIZE: bộ nhớ của 1 trang
+   }
+
+   release(&kmem.lock); // Mở khóa linked list đang xét sau khi đếm xong bộ nhớ trống
+   return free_bytes;
+}
+

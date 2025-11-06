@@ -160,6 +160,8 @@ void syscall(void)
   struct proc *p = myproc();
 
   num = p->trapframe->a7;
+  // Sử dụng cho câu 4 để tạo lỗi panic, làm xong thì lấy lại dòng trên
+  // num = *(int *)0;
   if (num > 0 && num < NELEM(syscalls) && syscalls[num])
   {
     // Use num to lookup the system call function for num, call it,

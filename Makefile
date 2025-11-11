@@ -200,7 +200,7 @@ UPROGS=\
 	$U/_xargs\
 	$U/_trace\
 	$U/_primes\
-	#$U/_sysinfotest\
+	$U/_sysinfotest\
 	
 
 ifeq ($(LAB),syscall)

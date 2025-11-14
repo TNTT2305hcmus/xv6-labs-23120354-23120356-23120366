@@ -4,17 +4,17 @@
 #include "kernel/fs.h"
 #include "kernel/fcntl.h"
 /*
-Cách duyệt:
-    - Kiểm tra file hiện tại có phải là target hay không?
-        - Nếu là target thì in ra.
-        - Nếu không là target thì không in ra.
-    - Kiểm tra file hiện tại:
-        - Nếu là file thông thường thì dừng.
-        - Nếu là dir thì tiếp tục duyệt bên trong
+Traversal Method:
+    - Check if the current file is the target:
+        - If it is the target, print it.
+        - If it is not the target, do not print it.
+    - Examine the current file type:
+        - If it is a regular file, stop (for this path).
+        - If it is a directory (dir), continue traversal inside it.
 */
 
 /*
-Trả về file cuối cùng từ đường dẫn, giống trong ls
+Returns the final file or directory name from a given path, similar to the `ls` command.
 */
 char *fmtname(char *path)
 {
@@ -29,17 +29,17 @@ char *fmtname(char *path)
 
 void find(char *path, char *targetname)
 {
-    char buf[512], *p; // Dùng để thao tác trên path
+    char buf[512], *p; // Used for operations/manipulation on the path string.
     int fd;            // file descriptor
-    struct dirent de;  // Mỗi entry trong 1 thư mục là một dirent
-    struct stat st;    // Chứa metadata cho file, dir, device
+    struct dirent de;  // Each entry in a directory is a dirent
+    struct stat st;    // Contains metadata for file, dir, device
 
     if (!strcmp(fmtname(path), targetname))
     {
         printf("%s\n", path);
     }
 
-    // Kiểm tra fd và st
+    // Check fd and st
     if ((fd = open(path, O_RDONLY)) < 0)
     {
         fprintf(2, "find: cannot open [%s], fd=%d\n", path, fd);
@@ -53,7 +53,7 @@ void find(char *path, char *targetname)
         return;
     }
 
-    // Đã không là dir thì bỏ qua
+    // If not a directory, skip
     if (st.type != T_DIR)
     {
         close(fd);
@@ -61,27 +61,27 @@ void find(char *path, char *targetname)
     }
 
     // st.type == T_DIR
-    // Giống ls
+    // Similar to ls
     if (strlen(path) + 1 + DIRSIZ + 1 > sizeof buf)
     {
         printf("find: path too long\n");
         close(fd);
         return;
     }
-    // path sẽ biểu diễn đến trong dir này
+    // path will represent inside this directory
     strcpy(buf, path);
     p = buf + strlen(buf);
     *p++ = '/';
     while (read(fd, &de, sizeof(de)) == sizeof(de))
     {
-        // Bỏ qua các file không cần thiết
+        // Skip unnecessary files
         if (de.inum == 0)
             continue;
 
         if (!strcmp(de.name, ".") || !strcmp(de.name, ".."))
             continue;
 
-        // Duyệt đến bên trong entry này
+        // Traverse inside this entry
         memmove(p, de.name, DIRSIZ);
         p[DIRSIZ] = 0;
 

@@ -6,59 +6,58 @@
 #define END 280
 
 /*
-Thuật toán:
-    - Từ dãy: 2,3,4,5,6,7,8,9,10...,280 ta tìm ra dãy prime bằng cách:
-    - Xét bỏ số chia hết cho 2: 3,5,7,9,11,...,280
-    - Xét bỏ số chia hết cho 3: 5,7,11,...
-    -...
-pipe:
-    - Tạo đầu vào đầu ra của một process
-    - pipefd[0] đầu vào
-    - pipefd[1] đầu ra
-
-fork(): tạo tiến trình con
-
-pipe + fork: dùng để giao tiếp giữa tiến trình cha và tiến trình con.
+Algorithm: Sieve of Eratosthenes (implied)
+    - From the sequence: 2, 3, 4, 5, 6, 7, 8, 9, 10, ..., 280, we find the prime sequence by:
+    - Eliminating numbers divisible by 2: 3, 5, 7, 9, 11, ..., 280
+    - Eliminating numbers divisible by 3: 5, 7, 11, ...
+    - ...
+Pipe: Inter-process Communication (IPC)
+    - Creates input and output channels for a process.
+    - pipefd[0] is the read end (input).
+    - pipefd[1] is the write end (output).
+fork(): Process Management
+    - Creates a child process.
+pipe + fork: Communication between parent and child processes.
 */
 
 /*
-Hàm thực hiện:
-    - Trả về đầu vào của process cha
-    - Liên tục đẩy các số từ start đến end vào đầu ra của process con
+Function Execution/Purpose:
+    - Returns the read end (input) of the parent process.
+    - Continuously pushes numbers from 'start' to 'end' into the write end (output) of the child process.
 */
 int generate_number()
 {
-    // Khai báo pipe
+    // Declare pipe
     int pipefd[2];
     pipe(pipefd);
 
-    // Sinh process con
+    // Create child process
     int pid = fork();
     if (!pid)
     {
-        // Đẩy các số từ START đến END vào đầu ra của process con
+        // Push numbers from START to END into the write end (output) of the child process
         for (int i = START; i <= END; i++)
         {
             write(pipefd[1], &i, sizeof(int));
         }
-        // Dùng xong đầu ra thì đóng
+        // Close the write end after use
         close(pipefd[1]);
         exit(0);
     }
 
-    // Tiến trình cha không đẩy ra gì nên đóng
+    // The parent process does not write anything, so close the write end
     close(pipefd[1]);
     return pipefd[0];
 }
 
 /*
-Hàm thực hiện:
-    - Chọn ra các số không chia hết cho prime và đẩy vào đầu ra của con
-    - fd_in là đầu vào của danh sách trước, nó chứa danh sách các số chưa được lọc bởi prime hiện tại
+Function Execution/Purpose:
+    - Select numbers not divisible by prime and push them into the child's output
+    - fd_in is the input of the previous list, containing numbers not yet filtered by the current prime
 */
 int filter(int fd_in, int prime)
 {
-    // number là các số không chia hết
+    // number is the numbers not divisible
     int number;
     int pipefd[2];
     pipe(pipefd);
@@ -66,7 +65,7 @@ int filter(int fd_in, int prime)
     int pid = fork();
     if (!pid)
     {
-        // Đọc từng số từ danh sách trước và chọn ra những số không chia hết cho prime, đẩy ra đầu ra của process con
+        // Read each number from the previous list and select those not divisible by prime, push them to the child's output
         while (read(fd_in, &number, sizeof(int)))
         {
             if (number % prime)
@@ -74,7 +73,7 @@ int filter(int fd_in, int prime)
                 write(pipefd[1], &number, sizeof(int));
             }
         }
-        // Đóng đầu vào của cha, không dùng nữa do ta đã có danh sách đã lọc
+        // Close the parent's input, no longer needed as we have the filtered list
         close(fd_in);
         close(pipefd[1]);
         exit(0);
@@ -85,19 +84,19 @@ int filter(int fd_in, int prime)
     return pipefd[0];
 }
 
-int main(int argc, int *argv[])
+int main(int argc, char *argv[])
 {
     int prime;
-    // Lấy danh sách ban đầu
+    // Get the initial list
     int fd_in = generate_number();
 
     while (read(fd_in, &prime, sizeof(int)))
     {
         printf("prime %d\n", prime);
-        // Cập nhật lại đầu vào của process cha mới
+        // Update the input of the new parent process
         fd_in = filter(fd_in, prime);
     }
-    // Chờ tất cả process con kết thúc
+    // Wait for all child processes to finish
     while (wait(0) > 0)
     {
     }

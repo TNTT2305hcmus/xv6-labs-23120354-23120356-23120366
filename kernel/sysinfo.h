@@ -1,4 +1,5 @@
-struct sysinfo {
-  uint64 freemem;  // Số lượng bộ nhớ trống
-  uint64 nproc;    // Số lượng tiến trình đang ở trạng thái UNUSED
+struct sysinfo
+{
+  uint64 freemem; // So luong bo nho trong
+  uint64 nproc;   // So luong tien trinh dang o trang thai UNUSED
 };

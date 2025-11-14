@@ -7,25 +7,28 @@
 #include "proc.h"
 #include "sysinfo.h"
 
-uint64 
+uint64
 sys_sysinfo(void)
 {
     uint64 address;
     struct sysinfo info;
 
-    // Hàm argaddr truy xuất đối số được lưu trong thanh ghi khi chuyển từ user sang kernel
-    // Lấy đối số thứ nhất (0) và lưu địa chỉ ảo user-space của đối số vào biến address
+    // Ham argaddr truy xuat doi so duoc luu trong thanh ghi khi chuyen tu user sang kernel
+    // Lay doi so thu nhat (0) va luu dia chi ao user-space cua doi so vao bien address
+
     argaddr(0, &address);
 
-    // Gán số lượng bộ nhớ trống và số lượng tiến trình ở trạng thái UNUSED vào info
+    // Gan so luong bo nho trong va so luong tien trinh o trang thai UNUSED vao info
     info.freemem = freemem_count();
     info.nproc = nproc_count();
 
-    // Hàm copyout thực hiện sao chép sao cho kernel chỉ ghi vào một vùng nhớ hợp lệ thuộc về user.
-    // myproc()->pagetable : Lấy bảng trang của tiến trình hiện tại thực hiện dịch địa chỉ
-    // (char *)&info : Trỏ tới dữ liệu nguồn trong kernel
-    // sizeof(info) : Kích thước dữ liệu cần sao chép
-    if(copyout(myproc()->pagetable, address, (char *)&info, sizeof(info)) < 0){
+    // Ham copyout thuc hien sao chep sao cho kernel chi ghi vao mot vung nho hop le thuoc ve user.
+    // myproc()->pagetable : Lay bang trang cua tien trinh hien tai thuc hien dich dia chi
+    // (char *)&info : Tro toi du lieu nguon trong kernel
+    // sizeof(info) : Kich thuoc du lieu can sao chep
+
+    if (copyout(myproc()->pagetable, address, (char *)&info, sizeof(info)) < 0)
+    {
         return -1;
     }
 

@@ -14,28 +14,28 @@ void freerange(void *pa_start, void *pa_end);
 extern char end[]; // first address after kernel.
                    // defined by kernel.ld.
 
-struct run {
+struct run
+{
   struct run *next;
 };
 
-struct {
+struct
+{
   struct spinlock lock;
   struct run *freelist;
 } kmem;
 
-void
-kinit()
+void kinit()
 {
   initlock(&kmem.lock, "kmem");
-  freerange(end, (void*)PHYSTOP);
+  freerange(end, (void *)PHYSTOP);
 }
 
-void
-freerange(void *pa_start, void *pa_end)
+void freerange(void *pa_start, void *pa_end)
 {
   char *p;
-  p = (char*)PGROUNDUP((uint64)pa_start);
-  for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE)
+  p = (char *)PGROUNDUP((uint64)pa_start);
+  for (; p + PGSIZE <= (char *)pa_end; p += PGSIZE)
     kfree(p);
 }
 
@@ -43,18 +43,17 @@ freerange(void *pa_start, void *pa_end)
 // which normally should have been returned by a
 // call to kalloc().  (The exception is when
 // initializing the allocator; see kinit above.)
-void
-kfree(void *pa)
+void kfree(void *pa)
 {
   struct run *r;
 
-  if(((uint64)pa % PGSIZE) != 0 || (char*)pa < end || (uint64)pa >= PHYSTOP)
+  if (((uint64)pa % PGSIZE) != 0 || (char *)pa < end || (uint64)pa >= PHYSTOP)
     panic("kfree");
 
   // Fill with junk to catch dangling refs.
   memset(pa, 1, PGSIZE);
 
-  r = (struct run*)pa;
+  r = (struct run *)pa;
 
   acquire(&kmem.lock);
   r->next = kmem.freelist;
@@ -72,28 +71,28 @@ kalloc(void)
 
   acquire(&kmem.lock);
   r = kmem.freelist;
-  if(r)
+  if (r)
     kmem.freelist = r->next;
   release(&kmem.lock);
 
-  if(r)
-    memset((char*)r, 5, PGSIZE); // fill with junk
-  return (void*)r;
+  if (r)
+    memset((char *)r, 5, PGSIZE); // fill with junk
+  return (void *)r;
 }
 
-// Đếm bộ nhớ trống để gán vào trường freemem trong struct sysinfo
+// Dem bo nho trong de gan vao truong freemem trong struct sysinfo
 uint64
 freemem_count(void)
 {
-   struct run *r; // Tạo 1 linked list gồm các trang bộ nhớ vật lý trống
-   uint64 free_bytes = 0;
-   acquire(&kmem.lock); // Yêu cầu khóa linked list đang xét. Không bị thay đổi bới CPU hoặc tiến trình khác.
+  struct run *r; // Tao 1 linked list gom cac trang bo nho vat ly trong
+  uint64 free_bytes = 0;
+  acquire(&kmem.lock); // Yeu cau khoa linked list dang xet. Khong bi thay doi boi CPU hoac tien trinh khac.
 
-   for(r = kmem.freelist; r ; r = r->next){
-      free_bytes += PGSIZE; // PGSIZE: bộ nhớ của 1 trang
-   }
+  for (r = kmem.freelist; r; r = r->next)
+  {
+    free_bytes += PGSIZE; // PGSIZE: bo nho cua 1 trang
+  }
 
-   release(&kmem.lock); // Mở khóa linked list đang xét sau khi đếm xong bộ nhớ trống
-   return free_bytes;
+  release(&kmem.lock); // Mo khoa linked list dang xet sau khi dem xong bo nho trong
+  return free_bytes;
 }
-

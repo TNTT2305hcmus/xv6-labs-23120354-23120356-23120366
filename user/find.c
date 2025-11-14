@@ -4,18 +4,19 @@
 #include "kernel/fs.h"
 #include "kernel/fcntl.h"
 /*
-Cách duyệt:
-    - Kiểm tra file hiện tại có phải là target hay không?
-        - Nếu là target thì in ra.
-        - Nếu không là target thì không in ra.
-    - Kiểm tra file hiện tại:
-        - Nếu là file thông thường thì dừng.
-        - Nếu là dir thì tiếp tục duyệt bên trong
+Cach duyet:
+    - Kiem tra file hien tai co phai la target hay khong?
+        - Neu la target thi in ra.
+        - Neu khong la target thi khong in ra.
+    - Kiem tra file hien tai:
+        - Neu la file thong thuong thi dung.
+        - Neu la dir thi tiep tuc duyet ben trong
 */
 
 /*
-Trả về file cuối cùng từ đường dẫn, giống trong ls
+Tra ve file cuoi cung tu duong dan, giong trong ls
 */
+
 char *fmtname(char *path)
 {
     char *p;
@@ -29,10 +30,10 @@ char *fmtname(char *path)
 
 void find(char *path, char *targetname)
 {
-    char buf[512], *p; // Dùng để thao tác trên path
+    char buf[512], *p; // Dung de thao tac tren path
     int fd;            // file descriptor
-    struct dirent de;  // Mỗi entry trong 1 thư mục là một dirent
-    struct stat st;    // Chứa metadata cho file, dir, device
+    struct dirent de;  // Moi entry trong 1 thu muc la mot dirent
+    struct stat st;    // Chua metadata cho file, dir, device
 
     if (!strcmp(fmtname(path), targetname))
     {
@@ -53,7 +54,7 @@ void find(char *path, char *targetname)
         return;
     }
 
-    // Đã không là dir thì bỏ qua
+    // Da khong la dir thi bo qua
     if (st.type != T_DIR)
     {
         close(fd);
@@ -61,27 +62,27 @@ void find(char *path, char *targetname)
     }
 
     // st.type == T_DIR
-    // Giống ls
+    // Giong ls
     if (strlen(path) + 1 + DIRSIZ + 1 > sizeof buf)
     {
         printf("find: path too long\n");
         close(fd);
         return;
     }
-    // path sẽ biểu diễn đến trong dir này
+    // path se bieu dien den trong dir nay
     strcpy(buf, path);
     p = buf + strlen(buf);
     *p++ = '/';
     while (read(fd, &de, sizeof(de)) == sizeof(de))
     {
-        // Bỏ qua các file không cần thiết
+        // Bo qua cac file khong can thiet
         if (de.inum == 0)
             continue;
 
         if (!strcmp(de.name, ".") || !strcmp(de.name, ".."))
             continue;
 
-        // Duyệt đến bên trong entry này
+        // Duyet den ben trong entry nay
         memmove(p, de.name, DIRSIZ);
         p[DIRSIZ] = 0;
 

@@ -1,0 +1,71 @@
+1. Looking at the backtrace output, which function called syscall?
+    Result of backtrace:
+
+    Thread 1 hit Breakpoint 1, syscall () at kernel/syscall.c:158
+    (gdb) backtrace
+    #0 syscall () at kernel/syscall.c:158
+    #1 0x0000000080001ab8 in usertrap () at kernel/trap.c:67
+    #2 0x0505050505050505 in ?? ()
+    --> The function called syscall is usertrap()
+
+2. What is the value of p->trapframe->a7 and what does that value represent?
+    The value of p->trapframe->a7 is 0x7.
+    Look at initcode.S, SYS_exec --> a7, so 0x7 is syscall number of SYS_exec
+
+        #include "syscall.h"
+
+        # exec(init, argv)
+        .globl start
+        start:
+                la a0, init
+                la a1, argv
+                li a7, SYS_exec //Here
+                ecall
+        ...
+
+3. What was the previous mode that the CPU was in?
+    $sstatus value is: 0x20000000000022 (hex) --> 10000000000000000000000000000000000000000000000010(binary)
+    Infomation about previous mode is 8th bit (count from 0): 0
+    0 is Usermode, 1 is kernelmode
+    --> the previous mode is usermode.
+
+4. Write down the assembly instruction the kernel is panicing at. Which register corresponds to the variable num?
+    Open file syscall.c replace "num = p->trapframe->a7;" by "num = *(int *)0;"
+    After that, make qemu again, we can see panic error:
+
+    hart 2 starting
+    hart 1 starting
+    scause=0xd sepc=0x80002b34 stval=0x0
+    panic: kerneltrap
+
+    The sepc is the address of error instruction, go to kernel.asm find "80002b34" 
+
+    num = *(int *)0;
+    80002b32:	4781                	li	a5,0
+    80002b34:	439c                	lw	a5,0(a5) <-- This is error instruction
+    80002b36:	fcf42a23          	sw	a5,-44(s0)
+
+    And the register corresponds to the variable num is: a5
+
+5.1. Why does the kernel crash?
+    After setting for debug, we can see the error instruction in the layout.
+    Now, run command: x/i $sepc (sepc is the error instruction address),
+    It is present that: 0x14:          Cannot access memory at address 0x14.
+    In conclusion, the kernel crash because access address 0.
+
+5.2. Is address 0 mapped in the kernel address space?
+    No, address 0 is unmapped in the kernel address space.
+    Because it is used to catch null reference.
+
+5.3 Is that confirmed by the value in scause above? 
+    In question 4, values in cause is: scause=0xd sepc=0x80002b34 stval=0x0
+    scause=0xd is "Load page fault" error.
+    stval=0x0 is the address is wrongly accessed.
+
+6.1. What is the name of the binary that was running when the kernel paniced?
+    Enter: p p->name, terminal prints:
+    $1 = "initcode\000\...\000", so the name of the bianry is initcode.
+
+6.2. What is its process id (pid)?
+    Enter: p p->pid, terminal prints:
+    $2 = 1, so its process id is 1.

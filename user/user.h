@@ -23,6 +23,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int trace(int mask);
 int sysinfo(struct sysinfo*); // Tạo hàm mới để gọi sysinfo từ user
 
 // ulib.c
